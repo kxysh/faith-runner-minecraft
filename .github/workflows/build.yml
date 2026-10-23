@@ -1,0 +1,39 @@
+name: Build Faith Runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Build the engine (faith_ffi.dll)
+        shell: bash
+        run: cargo build --release -p faith_ffi
+
+      - name: Build the mod jar
+        shell: bash
+        working-directory: minecraft
+        run: ./gradlew build --no-daemon
+
+      - name: Collect the files
+        shell: bash
+        run: |
+          mkdir out
+          cp target/release/faith_ffi.dll out/
+          cp minecraft/build/libs/faithrunner-1.0.0.jar out/
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: faith-runner
+          path: out/
